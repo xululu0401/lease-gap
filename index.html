@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>从退租到起租 · 换租时旧房到期和新房起租对不上，哪天交钥匙、哪天起租最省</title>
+<meta name="description" content="换租时旧房到期和新房起租很少正好对上。填两边月租、旧房到期日、违约金、续住价、新房能起租的日子和搬家要几天，把每一种「哪天交旧房钥匙 × 哪天新房起租」都算一遍：提前退、到期退、续住几天各要多花多少，哪天最省。">
+<style>
+  :root{--bg:#f2f1ec;--paper:#fffefb;--ink:#22262a;--ink2:#4f565c;--mut:#868c91;--line:#dfddd5;--old:#c9873e;--old2:#f5e6d3;--new:#3d6f8f;--new2:#dbe8f0;--out:#8a5a9e;--out2:#eadff0;--hi:#2f6b4f;--hi2:#dcefe4;--bad:#a8372b}
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font:16px/1.6 -apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1080px;margin:0 auto;padding:22px 14px 72px}
+  h1{font-size:30px;line-height:1.25;margin:0 0 6px;letter-spacing:.03em}
+  .sub{color:var(--ink2);margin:0;font-size:15.5px}
+  .muted{color:var(--mut);font-size:13.5px}
+  .hide{display:none !important}
+  button,input,select{font:inherit}
+  button{cursor:pointer}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 4px}
+  .chip{background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-size:13.5px;color:var(--ink2)}
+  .chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+  .card{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:16px;min-width:0;margin-top:14px}
+  .card h2{font-size:16px;margin:0 0 8px}
+  .big{font-size:20px;line-height:1.55;font-weight:700;margin:0 0 8px;overflow-wrap:anywhere}
+  .why{color:var(--ink2);font-size:14.5px;margin:0;overflow-wrap:anywhere}
+  .err{background:#fff4f2;border:1px solid #f0c9c2;color:var(--bad);border-radius:8px;padding:10px 14px}
+  .err ul{margin:4px 0 0;padding-left:20px}
+  /* 时间线 */
+  .tl{margin-top:12px;overflow:hidden}
+  .tlrow{display:flex;align-items:center;gap:8px;margin:3px 0}
+  .tlrow .lb{flex:0 0 52px;font-size:12.5px;color:var(--ink2);text-align:right;white-space:nowrap}
+  .days{flex:1 1 auto;min-width:0;display:flex;gap:1px;height:22px}
+  .days i{flex:1 1 0;min-width:0;background:#f1efe9;border-radius:2px}
+  .days.old i.on{background:var(--old)} .days.new i.on{background:var(--new)} .days.out i.on{background:var(--out)}
+  .days i.ov{outline:2px solid var(--hi);outline-offset:-2px}
+  .days i.e{box-shadow:inset 0 -4px 0 var(--bad)}
+  .axis{display:flex;gap:8px;font-size:11.5px;color:var(--mut)}
+  .axis .lb{flex:0 0 52px}
+  .axis .ticks{flex:1 1 auto;min-width:0;position:relative;height:32px}
+  .axis .ticks span{position:absolute;transform:translateX(-50%);white-space:nowrap}
+  .legend{font-size:12.5px;color:var(--mut);margin:4px 0 0 60px}
+  .legend span{white-space:nowrap}
+  .legend b{display:inline-block;width:10px;height:10px;border-radius:2px;margin:0 3px 0 8px;vertical-align:-1px}
+  /* 对照表 */
+  table{width:100%;border-collapse:collapse;font-size:14.5px}
+  th,td{border-bottom:1px solid var(--line);padding:8px 6px;text-align:left;vertical-align:top}
+  th{font-size:13px;color:var(--mut);font-weight:600}
+  td.n{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;font-weight:700}
+  tr.best td{background:var(--hi2)}
+  tr.none td{color:var(--mut)}
+  .tag{display:inline-block;font-size:12px;background:var(--hi);color:#fff;border-radius:4px;padding:0 6px;margin-left:4px}
+  .bill{margin:8px 0 0;padding:0;list-style:none;font-size:14.5px}
+  .bill li{display:flex;justify-content:space-between;gap:12px;border-bottom:1px dashed var(--line);padding:4px 0}
+  .bill li span:last-child{white-space:nowrap;font-variant-numeric:tabular-nums}
+  .bill li.sum{font-weight:700;border-bottom:none}
+  .acts{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+  .act{text-align:left;background:#f1f7f3;border:1px solid var(--hi2);color:var(--ink);border-radius:8px;padding:7px 10px;font-size:14.5px;overflow-wrap:anywhere}
+  .act:hover{background:#e3f1e8}
+  /* 输入 */
+  .forms{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:14px}
+  .forms .card{margin-top:0}
+  .fr{display:grid;grid-template-columns:minmax(0,1fr) 128px;gap:8px;align-items:center;margin:6px 0}
+  .fr label{font-size:14px;color:var(--ink2)}
+  .fr label small{display:block;color:var(--mut);font-size:11.5px;line-height:1.3}
+  input,select{width:100%;min-width:0;border:1px solid var(--line);background:#fff;border-radius:6px;padding:4px 8px;font-size:16px;text-align:right}
+  select{text-align:left}
+  input:focus,select:focus{outline:2px solid var(--hi2);border-color:var(--hi)}
+  .bad{border-color:var(--bad)!important;background:#fff4f2!important}
+  .tools{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+  .tools button{background:#fff;border:1px solid var(--line);border-radius:6px;padding:6px 12px;font-size:14px}
+  details{margin-top:16px}
+  details summary{cursor:pointer;font-weight:600}
+  details li{font-size:14px;color:var(--ink2);margin:4px 0}
+  @media (max-width:860px){
+    .forms{grid-template-columns:minmax(0,1fr)}
+    h1{font-size:24px}
+    .big{font-size:17.5px}
+    .card{padding:12px}
+    .tlrow .lb,.axis .lb{flex-basis:40px} .legend{margin-left:0}
+    table{font-size:13.5px} th,td{padding:6px 4px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>从退租到起租</h1>
+  <p class="sub">换租时旧房到期和新房起租很少正好对上。填两边的月租、旧房到期日和新房能起租的日子，把每一种「哪天交旧房钥匙 × 哪天新房起租」都算一遍：提前退、到期退、续住几天，各要多花多少，哪天最省。</p>
+  <div class="chips" id="presets"></div>
+  <p class="muted" id="presetNote"></p>
+
+  <div class="card">
+    <div id="errBox" class="err hide"></div>
+    <div id="okBox">
+      <p class="big" id="headline"></p>
+      <p class="why" id="why"></p>
+      <div class="tl" id="tl" aria-label="最省那条排法的日子：旧房住到哪天、新房从哪天起租、中间是否住外面"></div>
+    </div>
+  </div>
+
+  <div class="card" id="cmpCard">
+    <h2>三种走法并排看（每种取它自己最省的那天）</h2>
+    <div id="cmp"></div>
+    <h2 style="margin-top:14px">最省那条的账（比「到期当天无缝换房」多花多少）</h2>
+    <ul class="bill" id="bill"></ul>
+    <h2 style="margin-top:14px">改一样试试（点了直接改条件）</h2>
+    <div class="acts" id="acts"></div>
+  </div>
+
+  <div class="forms">
+    <div class="card">
+      <h2>旧房</h2>
+      <div class="fr"><label for="oldRent">月租<small>元</small></label><input id="oldRent" inputmode="numeric"></div>
+      <div class="fr"><label for="endDate">到期日<small>合同到期、该交钥匙那天</small></label><input id="endDate" placeholder="2026-12-15"></div>
+      <div class="fr"><label for="penalty">提前退的违约金<small>元；不能提前退就空着</small></label><input id="penalty" inputmode="numeric"></div>
+      <div class="fr"><label for="extRate">续住每天<small>元；房东不让续就空着</small></label><input id="extRate" inputmode="numeric"></div>
+      <div class="fr"><label for="extMax">最多续住<small>天</small></label><input id="extMax" inputmode="numeric"></div>
+    </div>
+    <div class="card">
+      <h2>新房</h2>
+      <div class="fr"><label for="newRent">月租<small>元</small></label><input id="newRent" inputmode="numeric"></div>
+      <div class="fr"><label for="s0">最早起租<small>新房东说的最早哪天</small></label><input id="s0" placeholder="2026-11-28"></div>
+      <div class="fr"><label for="s1">最晚起租<small>最多肯留到哪天</small></label><input id="s1" placeholder="2026-12-05"></div>
+      <div class="fr"><label for="mode">日租怎么算<small>看合同或问房东</small></label><select id="mode"><option value="30">月租 ÷ 30</option><option value="365">月租 × 12 ÷ 365</option></select></div>
+    </div>
+    <div class="card">
+      <h2>搬家</h2>
+      <div class="fr"><label for="name">这次叫什么</label><input id="name" maxlength="16" style="text-align:left"></div>
+      <div class="fr"><label for="overlap">两边钥匙都在手要几天<small>天；收拾、搬、打扫交房</small></label><input id="overlap" inputmode="numeric"></div>
+      <div class="fr"><label for="hotel">中间住外面每晚<small>元；不考虑就空着</small></label><input id="hotel" inputmode="numeric"></div>
+      <div class="fr"><label for="move2">东西先寄存、多搬一次<small>元；住外面时才算</small></label><input id="move2" inputmode="numeric"></div>
+      <p class="muted" style="margin:8px 0 0">改完自动重算 <span id="saveTag"></span></p>
+    </div>
+  </div>
+
+  <div class="tools">
+    <button type="button" id="dlPng">结果卡 PNG</button>
+    <button type="button" id="dlCsv">三种走法 CSV</button>
+    <button type="button" id="dlMd">文字版 MD</button>
+    <button type="button" id="dlJson">备份 JSON</button>
+    <button type="button" id="impJson">导入备份</button>
+    <input type="file" id="impFile" accept=".json,application/json" class="hide">
+    <button type="button" id="reset">回到默认</button>
+  </div>
+  <p class="muted" id="impMsg"></p>
+
+  <details>
+    <summary>怎么算的、哪些不算</summary>
+    <ul>
+      <li>房租按天折算：日租 = 月租 ÷ 30，或 月租 × 12 ÷ 365，按你选的。旧房住到交钥匙那天的前一晚，新房从起租那天算起。</li>
+      <li>比的是「比到期当天交钥匙、同一天新房起租」多花多少。新房早起租一天多一天新房租，晚起租一天少一天；提前退一天退回一天旧房租，再加违约金；续住一天加一天续住价；中间每住外面一晚加一晚的钱，再加一次「先寄存、多搬一次」。这个差跟你从哪天开始算无关，所以不同排法可以直接比。</li>
+      <li>走得通的排法：新房起租在「最早～最晚」之间，并且要么两边钥匙重叠够搬家的天数，要么先搬出来住外面（填了每晚价才算）。提前退最多往前看 90 天。</li>
+      <li>一样省的排法里，先挑住外面少的，再挑交钥匙离到期日近的。</li>
+      <li>没算的：押金退不退、物业水电、搬家公司本身的钱（两种走法都要搬一次，抵掉了）、违约金是否合法合理。合同怎么写以合同为准；默认数字是虚构示例。</li>
+    </ul>
+  </details>
+</div>
+<script src="./core.js"></script>
+<script src="./ui.js"></script>
+</body>
+</html>
